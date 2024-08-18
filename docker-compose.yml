@@ -1,0 +1,51 @@
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra-container
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_USER=admin
+      - CASSANDRA_PASSWORD=admin
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - app-network
+
+  sample-data:
+    image: cassandra:latest
+    depends_on:
+      - cassandra
+    restart: "no"
+    entrypoint: ["/init.sh"]
+    volumes:
+      - ./init.sh:/init.sh
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  go-app:
+    image: my-go-app
+    container_name: go-app-container
+    depends_on:
+      - cassandra
+      - redis
+    ports:
+      - "9090:9090"
+    env_file:
+      - .env  
+    networks:
+      - app-network
+
+volumes:
+  cassandra-data:
+
+networks:
+  app-network:
